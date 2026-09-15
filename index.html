@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SPQR Jeopardy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --maroon-900:#2a0a0f; --maroon-800:#3d0f16; --maroon-700:#54141d;
+    --gold:#d4af37; --gold-light:#f3d878; --gold-dim:#8a7127;
+    --marble-1:#ece6d8; --marble-2:#d9d0ba; --green:#3f7a4e; --red:#8c2b2b;
+  }
+  *{box-sizing:border-box; cursor:none;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'EB Garamond', serif;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(212,175,55,0.08), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(212,175,55,0.06), transparent 45%),
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 6px),
+      linear-gradient(160deg, var(--maroon-900), var(--maroon-800) 55%, #1c0609);
+    color:var(--marble-1); min-height:100vh; overflow-x:hidden;
+  }
+  .app{max-width:1150px;margin:0 auto;padding:22px 18px 60px;position:relative;}
+  .titlebar{text-align:center;margin-bottom:18px;}
+  .titlebar h1{
+    font-family:'Cinzel',serif; font-weight:900; font-size:clamp(28px,5vw,46px);
+    letter-spacing:4px; margin:0; color:var(--gold-light);
+    text-shadow:0 2px 0 #000, 0 0 18px rgba(212,175,55,0.35);
+  }
+  .titlebar .sub{ font-family:'Cinzel',serif; letter-spacing:2px; font-size:12px; color:var(--gold-dim); text-transform:uppercase; margin-top:4px; }
+  .laurels{font-size:20px;opacity:.85;letter-spacing:6px;}
+
+  .warning-banner{
+    max-width:440px; margin:0 auto 16px; background:rgba(140,43,43,0.25); border:1px solid #c95a5a;
+    color:#f3d0d0; font-size:13px; line-height:1.5; padding:12px 16px; border-radius:10px; text-align:center;
+  }
+  .warning-banner b{color:#ffdede;}
+
+  .panel{
+    max-width:440px;margin:0 auto 50px; text-align:center;
+    background:linear-gradient(160deg,var(--maroon-700),var(--maroon-800));
+    border:1px solid var(--gold-dim); border-radius:14px; padding:32px 28px;
+    box-shadow:0 20px 50px rgba(0,0,0,.5), inset 0 0 40px rgba(212,175,55,0.06);
+  }
+  .panel p{color:var(--marble-2); font-size:16px; margin-top:0;}
+  .panel input{
+    width:100%; padding:12px 14px; font-size:17px; border-radius:8px;
+    border:1px solid var(--gold-dim); background:#1e0a0d; color:var(--marble-1);
+    font-family:'EB Garamond',serif; margin-bottom:14px;
+  }
+  .panel input:focus{outline:2px solid var(--gold);}
+  .lobby-status-pill{
+    display:inline-block; font-family:'Cinzel',serif; font-size:12px; color:var(--gold-light);
+    background:rgba(0,0,0,0.3); border:1px solid rgba(212,175,55,0.35); border-radius:20px;
+    padding:5px 14px; margin-bottom:16px; letter-spacing:.5px;
+  }
+  button{ font-family:'Cinzel',serif; border:none; letter-spacing:1px; }
+  .btn-gold{
+    background:linear-gradient(180deg,var(--gold-light),var(--gold) 60%,var(--gold-dim));
+    color:#2a1c04; font-weight:700; padding:12px 20px; border-radius:8px;
+    box-shadow:0 4px 0 #6d5a1c, 0 6px 14px rgba(0,0,0,.4); transition:transform .05s ease, filter .1s ease;
+  }
+  .btn-gold:hover{filter:brightness(1.06);}
+  .btn-gold:active{transform:translateY(3px); box-shadow:0 1px 0 #6d5a1c;}
+  .btn-gold:disabled{opacity:.5; filter:none;}
+  .btn-ghost{ background:transparent; border:1px solid var(--gold-dim); color:var(--gold-light); padding:8px 14px; border-radius:7px; font-size:13px; }
+  .btn-ghost:hover{background:rgba(212,175,55,0.1);}
+
+  .lobby-title{font-family:'Cinzel',serif; color:var(--gold-light); font-size:20px; margin-bottom:6px; letter-spacing:1px;}
+  .lobby-sub{color:var(--marble-2); font-size:14px; margin-bottom:18px;}
+  .lobby-list{list-style:none; padding:0; margin:0 0 22px; text-align:left; min-height:8px;}
+  .lobby-list li{
+    display:flex; align-items:center; gap:10px; padding:9px 12px; margin-bottom:7px;
+    background:rgba(0,0,0,0.25); border-radius:8px; border:1px solid rgba(212,175,55,0.2);
+    font-size:15px; animation:pop-in .25s ease;
+  }
+  @keyframes pop-in{ from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);} }
+  .lobby-list .dot{width:11px;height:11px;border-radius:50%;flex-shrink:0; box-shadow:0 0 6px rgba(0,0,0,.5);}
+  .lobby-list .you-tag{margin-left:auto; font-size:11px; color:var(--gold-dim); font-family:'Cinzel',serif;}
+  .lobby-empty{color:var(--gold-dim); font-size:13px; padding:10px 0;}
+  .status-line{font-size:12px; color:var(--gold-dim); margin-top:10px; min-height:16px;}
+  .share-hint{
+    font-size:12.5px; color:var(--marble-2); background:rgba(0,0,0,0.25);
+    border:1px dashed rgba(212,175,55,0.35); border-radius:8px; padding:10px 12px; margin-bottom:18px;
+  }
+
+  .scoreboard{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:22px; }
+  .chip{
+    display:flex; align-items:center; gap:8px; background:rgba(0,0,0,0.25);
+    border:1px solid rgba(212,175,55,0.35); border-radius:30px; padding:7px 14px 7px 8px; font-size:14px;
+  }
+  .dot{width:12px;height:12px;border-radius:50%; box-shadow:0 0 6px rgba(0,0,0,.5);}
+  .chip .score{font-weight:700; color:var(--gold-light); font-family:'Cinzel',serif; margin-left:2px;}
+  .chip .you{font-size:10px; color:var(--gold-dim); margin-left:2px;}
+  .toolbar{display:flex; justify-content:center; gap:10px; margin-bottom:14px;}
+
+  .board{
+    display:grid; grid-template-columns:repeat(5,1fr); gap:6px;
+    background:rgba(0,0,0,0.25); padding:8px; border-radius:12px; border:1px solid rgba(212,175,55,0.3);
+  }
+  .cat-cell{
+    font-family:'Cinzel',serif; background:linear-gradient(180deg,var(--maroon-700),var(--maroon-900));
+    color:var(--gold-light); text-align:center; padding:14px 6px; border-radius:8px;
+    font-size:clamp(11px,1.6vw,14px); font-weight:700; letter-spacing:.5px; min-height:56px;
+    display:flex; align-items:center; justify-content:center; border:1px solid rgba(212,175,55,0.25);
+    text-shadow:0 1px 0 #000;
+  }
+  .clue-cell{
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.03), transparent),
+      radial-gradient(circle at 30% 20%, rgba(212,175,55,0.12), transparent 60%),
+      linear-gradient(160deg,#5c1b23,#3d0f16);
+    border:1px solid rgba(212,175,55,0.35); border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cinzel',serif; font-size:clamp(18px,3vw,26px); font-weight:700; color:var(--gold-light);
+    min-height:64px; transition:transform .12s ease, box-shadow .12s ease; text-shadow:0 2px 3px #000;
+  }
+  .clue-cell:not(.used):hover{transform:translateY(-2px); box-shadow:0 8px 16px rgba(0,0,0,.4);}
+  .clue-cell.used{ background:rgba(0,0,0,0.35); color:rgba(212,175,55,0.25); transform:none; box-shadow:none; }
+
+  .overlay{
+    position:fixed; inset:0; background:rgba(10,2,4,0.82);
+    display:flex; align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  .clue-card{
+    width:min(720px,94vw); background:linear-gradient(160deg,var(--maroon-700),var(--maroon-900));
+    border:1px solid var(--gold-dim); border-radius:16px; padding:34px 30px; text-align:center;
+    box-shadow:0 30px 70px rgba(0,0,0,.6), inset 0 0 60px rgba(212,175,55,0.05);
+  }
+  .clue-card .cat-label{ font-family:'Cinzel',serif; letter-spacing:2px; text-transform:uppercase; color:var(--gold-dim); font-size:13px; margin-bottom:6px; }
+  .clue-card .value-label{ font-family:'Cinzel',serif; color:var(--gold-light); font-size:22px; font-weight:900; margin-bottom:18px; }
+  .clue-text{ font-size:clamp(19px,2.6vw,26px); line-height:1.5; margin:10px 0 24px; color:var(--marble-1); }
+  .answer-text{
+    font-family:'Cinzel',serif; color:#bfe3c8; font-size:18px; margin-bottom:18px;
+    padding:10px 14px; border:1px dashed rgba(191,227,200,0.4); border-radius:8px; display:inline-block;
+  }
+  .buzz-status{ font-family:'Cinzel',serif; color:var(--gold-light); margin-bottom:16px; font-size:15px; min-height:22px; }
+  .clue-actions{display:flex; gap:12px; justify-content:center; flex-wrap:wrap;}
+  .btn-correct{background:linear-gradient(180deg,#6fbf7f,var(--green)); color:#0d2412; padding:11px 20px; border-radius:8px; font-weight:700; box-shadow:0 4px 0 #285a34;}
+  .btn-wrong{background:linear-gradient(180deg,#c95a5a,var(--red)); color:#320b0b; padding:11px 20px; border-radius:8px; font-weight:700; box-shadow:0 4px 0 #5a1717;}
+  .btn-buzz{ font-size:20px; padding:16px 46px; border-radius:50px; }
+
+  #cursor-layer{position:fixed; inset:0; pointer-events:none; z-index:500;}
+  .cursor{position:absolute; top:0; left:0; will-change:transform; display:flex; flex-direction:column; align-items:flex-start;}
+  .cursor svg{filter:drop-shadow(0 2px 3px rgba(0,0,0,.6));}
+  .cursor .label{
+    margin-top:1px; margin-left:15px; background:rgba(0,0,0,0.55); padding:2px 8px; border-radius:10px;
+    font-size:11px; font-family:'Cinzel',serif; color:#fff; white-space:nowrap; border:1px solid rgba(255,255,255,0.15);
+  }
+
+  .hidden{display:none !important;}
+  .footer-note{ text-align:center; color:var(--gold-dim); font-size:12px; margin-top:22px; letter-spacing:.5px; }
+</style>
+</head>
+<body>
+
+<div id="cursor-layer"></div>
+
+<div class="app">
+  <div class="titlebar">
+    <div class="laurels">🏛️ ⚜️ 🏛️</div>
+    <h1>SPQR JEOPARDY</h1>
+    <div class="sub">Ancient Rome Trivia — Play Live With Friends</div>
+  </div>
+
+  <div id="server-warning" class="warning-banner hidden">
+    ⚠️ <b>Can't reach the game server.</b> Make sure <code>server.py</code> is still running in your terminal, then reload this page.
+  </div>
+
+  <div id="start-screen" class="panel">
+    <div id="lobby-status-pill" class="lobby-status-pill hidden"></div>
+    <p id="start-copy">Enter your name to create or join the lobby on this server.</p>
+    <input id="name-input" maxlength="18" placeholder="Your name, citizen..." />
+    <button class="btn-gold" id="connection-test-btn" type="button" style="width:100%;margin-bottom:8px;">Test Server Connection</button>
+    <button class="btn-gold" id="join-btn" style="width:100%;">Enter the Forum</button>
+    <div class="status-line" id="join-status"></div>
+  </div>
+
+  <div id="lobby-screen" class="panel hidden">
+    <div class="lobby-title">⚔️ The Forum — Lobby</div>
+    <div class="lobby-sub" id="lobby-sub">Waiting for everyone to gather.</div>
+    <div class="share-hint">📜 Friends on your Wi-Fi can join at the network address printed in your terminal when the server started.</div>
+    <ul class="lobby-list" id="lobby-list"></ul>
+    <button class="btn-gold" id="start-game-btn" style="width:100%;">Start Game</button>
+    <div class="status-line">Anyone in the lobby can start once everyone's in.</div>
+  </div>
+
+  <div id="game-screen" class="hidden">
+    <div class="scoreboard" id="scoreboard"></div>
+    <div class="toolbar">
+      <button class="btn-ghost" id="reset-btn">⟲ New Game (back to lobby, reset scores)</button>
+    </div>
+    <div class="board" id="board"></div>
+    <div class="footer-note">Click a value to open a clue · First to buzz answers out loud · Anyone can mark Correct / Wrong</div>
+  </div>
+</div>
+
+<div id="clue-overlay" class="overlay hidden">
+  <div class="clue-card">
+    <div class="cat-label" id="clue-cat"></div>
+    <div class="value-label" id="clue-value"></div>
+    <div class="clue-text" id="clue-text"></div>
+    <div id="answer-block" class="hidden"><div class="answer-text" id="answer-text"></div></div>
+    <div class="buzz-status" id="buzz-status"></div>
+    <div class="clue-actions" id="clue-actions"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const PALETTE = ['#e04f5f','#4fa3e0','#e0b04f','#6fbf7f','#b06fe0','#e0824f','#4fd6c8','#e04fd0'];
+
+  const CATEGORIES = [
+    { name: "SPQR: Rome's Government", clues: [
+      {v:100, clue:"The abbreviation SPQR stands for this Latin phrase meaning 'The Senate and People of Rome.'", answer:"Senatus Populusque Romanus"},
+      {v:200, clue:"This body of wealthy, appointed elders was the most powerful advisory group in the Roman Republic.", answer:"The Senate"},
+      {v:300, clue:"Two of these officials, elected annually, jointly held the highest executive power in the Republic.", answer:"Consuls"},
+      {v:400, clue:"In times of crisis, the Republic could appoint one of these officials to hold near-absolute power for up to six months.", answer:"A Dictator"},
+      {v:500, clue:"This 5th-century BC law code, displayed publicly on bronze tablets, was Rome's first written body of law.", answer:"The Twelve Tables"},
+    ]},
+    { name: "Gods & Myths", clues: [
+      {v:100, clue:"This king of the Roman gods ruled the sky and hurled thunderbolts.", answer:"Jupiter"},
+      {v:200, clue:"According to legend, these twin brothers, raised by a she-wolf, founded Rome.", answer:"Romulus and Remus"},
+      {v:300, clue:"This goddess of love and beauty was claimed as the divine ancestor of Julius Caesar's family.", answer:"Venus"},
+      {v:400, clue:"This Trojan hero's journey to Italy, told by Virgil in an epic poem, was said to lead to Rome's founding.", answer:"Aeneas"},
+      {v:500, clue:"This two-faced god of doorways, beginnings, and transitions lends his name to the first month of the year.", answer:"Janus"},
+    ]},
+    { name: "Emperors & Dynasties", clues: [
+      {v:100, clue:"This former general became Rome's first emperor in 27 BC after defeating Mark Antony.", answer:"Augustus (Octavian)"},
+      {v:200, clue:"Infamous for cruelty and excess, this emperor was rumored to have played music while Rome burned.", answer:"Nero"},
+      {v:300, clue:"This emperor commissioned a great wall across northern Britain to mark the empire's frontier.", answer:"Hadrian"},
+      {v:400, clue:"This emperor moved the capital eastward and founded a great city that took his own name.", answer:"Constantine the Great"},
+      {v:500, clue:"This ruling family, beginning with Augustus, held the throne until Nero's death in 68 AD.", answer:"The Julio-Claudian dynasty"},
+    ]},
+    { name: "Engineering Marvels", clues: [
+      {v:100, clue:"This massive amphitheater in Rome hosted gladiator combats and could seat tens of thousands.", answer:"The Colosseum"},
+      {v:200, clue:"Romans built these elevated channel structures to carry fresh water across long distances into cities.", answer:"Aqueducts"},
+      {v:300, clue:"This famous network of durable stone roads gave rise to a saying about all paths leading to one city.", answer:"Roman roads"},
+      {v:400, clue:"This temple to all the gods, topped with a huge unreinforced dome, still stands largely intact in Rome.", answer:"The Pantheon"},
+      {v:500, clue:"This ancient building material, a mix of volcanic ash and lime, let Romans build structures that could even harden underwater.", answer:"Roman concrete (opus caementicium)"},
+    ]},
+    { name: "Latin & Legacy", clues: [
+      {v:100, clue:"This short Latin phrase, meaning 'I came, I saw, I conquered,' is credited to Julius Caesar.", answer:"Veni, vidi, vici"},
+      {v:200, clue:"This Latin phrase, meaning 'seize the day,' urges people to enjoy the present moment.", answer:"Carpe diem"},
+      {v:300, clue:"This Latin term for a summary of one's education and career literally translates to 'course of life.'", answer:"Curriculum vitae"},
+      {v:400, clue:"This cautionary Latin phrase, meaning 'let the buyer beware,' comes from Roman commercial law.", answer:"Caveat emptor"},
+      {v:500, clue:"This Latin motto, meaning 'thus always to tyrants,' was famously shouted by an assassin in a Washington theater in 1865.", answer:"Sic semper tyrannis"},
+    ]},
+  ];
+
+  let myId = localStorage.getItem('spqrPlayerId');
+  if(!myId){ myId = (crypto.randomUUID ? crypto.randomUUID() : 'p-' + Date.now() + '-' + Math.random()); localStorage.setItem('spqrPlayerId', myId); }
+  let myName = '';
+  let myColor = PALETTE[Math.floor(Math.random()*PALETTE.length)];
+  let screen = 'start';
+  let serverOk = true;
+
+  const $ = (id) => document.getElementById(id);
+
+  async function api(path, body, options = {}){
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), options.timeout || 4500);
+    try{
+      const res = await fetch(path, body ? {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(body),
+        cache: 'no-store',
+        credentials: 'same-origin',
+        signal: controller.signal,
+        keepalive: !!options.keepalive
+      } : {
+        method: 'GET',
+        cache: 'no-store',
+        credentials: 'same-origin',
+        signal: controller.signal
+      });
+      if(!res.ok) throw new Error('bad status');
+      const data = await res.json();
+      serverOk = true;
+      $('server-warning').classList.add('hidden');
+      return data;
+    }catch(e){
+      if(options.silent) return null;
+      serverOk = false;
+      $('server-warning').classList.remove('hidden');
+      return null;
+    }finally{
+      clearTimeout(timeout);
+    }
+  }
+
+  function escapeHtml(s){
+    return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function showScreen(name){
+    screen = name;
+    $('start-screen').classList.toggle('hidden', name !== 'start');
+    $('lobby-screen').classList.toggle('hidden', name !== 'lobby');
+    $('game-screen').classList.toggle('hidden', name !== 'game');
+    if(name !== 'game') $('clue-overlay').classList.add('hidden');
+  }
+
+  async function checkServer(){
+    const res = await api('/api/health', null, {timeout:2500, silent:true});
+    if(!res || !res.ok){
+      $('join-status').textContent = 'Server not reachable from this device.';
+    }
+  }
+
+  // ---------- Connection test ----------
+  const connectionTestBtn = $('connection-test-btn');
+  if(connectionTestBtn){
+    connectionTestBtn.addEventListener('click', async () => {
+      connectionTestBtn.disabled = true;
+      connectionTestBtn.textContent = 'Testing...';
+      const res = await api('/api/health', null, {timeout:3000, silent:true});
+      $('join-status').textContent = (res && res.ok)
+        ? '✓ Server connection works from this device.'
+        : '✗ This device cannot reach the game server.';
+      connectionTestBtn.disabled = false;
+      connectionTestBtn.textContent = 'Test Server Connection';
+    });
+  }
+
+  // ---------- Pre-join preview ----------
+  let previewBusy = false;
+  async function refreshStartScreenPreview(){
+    if(screen !== 'start' || previewBusy) return;
+    previewBusy = true;
+    const state = await api('/api/state?id=' + encodeURIComponent(myId), null, {timeout:3000, silent:true});
+    previewBusy = false;
+    if(!state) return;
+    const count = Object.keys(state.players).length;
+    const pill = $('lobby-status-pill');
+    pill.classList.remove('hidden');
+    if(count === 0){
+      pill.textContent = 'No lobby yet — you will create it';
+      $('join-btn').textContent = 'Create Lobby';
+      $('start-copy').textContent = 'Enter your name to create the lobby on this server.';
+    } else {
+      pill.textContent = count + (count===1 ? ' citizen waiting in the lobby' : ' citizens waiting in the lobby');
+      $('join-btn').textContent = 'Join the Forum';
+      $('start-copy').textContent = 'A lobby already exists on this server — enter your name to join.';
+    }
+  }
+
+  // ---------- Join ----------
+  $('join-btn').addEventListener('click', joinGame);
+  $('name-input').addEventListener('keydown', (e) => { if(e.key === 'Enter') joinGame(); });
+
+  async function joinGame(){
+    const name = $('name-input').value.trim();
+    if(!name){ $('name-input').focus(); $('join-status').textContent = 'Please enter a name first.'; return; }
+    const btn = $('join-btn');
+    btn.disabled = true;
+    const prevLabel = btn.textContent;
+    btn.textContent = 'Entering...';
+    myName = name.slice(0,18);
+
+    const res = await api('/api/join', {id: myId, name: myName}, {timeout:5000});
+    if(!res || !res.ok){
+      $('join-status').textContent = 'Could not connect to the host. Check the host address and make sure server.py is running.';
+      btn.disabled = false;
+      btn.textContent = prevLabel;
+      return;
+    }
+    if(res.color) myColor = res.color;
+
+    // Fetch state only after the server confirms the join.
+    let state = await api('/api/state?id=' + encodeURIComponent(myId), null, {timeout:5000});
+    if(!state){
+      $('join-status').textContent = 'Joined, but the game server stopped responding. Ask the host to check server.py.';
+      btn.disabled = false;
+      btn.textContent = prevLabel;
+      return;
+    }
+
+    $('join-status').textContent = '';
+    showScreen(state.phase === 'playing' ? 'game' : 'lobby');
+
+    btn.disabled = false;
+    btn.textContent = prevLabel;
+    startLoops();
+  }
+
+  // ---------- Lobby ----------
+  $('start-game-btn').addEventListener('click', async () => {
+    const res = await api('/api/start', {});
+    if(res && res.ok) showScreen('game');
+  });
+
+  function renderLobby(players){
+    const list = $('lobby-list');
+    const entries = Object.entries(players);
+    $('lobby-sub').textContent = entries.length <= 1
+      ? 'Waiting for others to gather. Anyone can start once ready.'
+      : entries.length + ' citizens have entered the forum.';
+    if(entries.length === 0){
+      list.innerHTML = '<div class="lobby-empty">No one here yet...</div>';
+      return;
+    }
+    list.innerHTML = entries.map(([id,p]) => `
+      <li><span class="dot" style="background:${p.color}"></span><span>${escapeHtml(p.name)}</span>${id===myId?'<span class="you-tag">YOU</span>':''}</li>
+    `).join('');
+  }
+
+  function renderScoreboard(players){
+    const el = $('scoreboard');
+    const entries = Object.entries(players);
+    if(entries.length === 0){ el.innerHTML = ''; return; }
+    entries.sort((a,b) => b[1].score - a[1].score);
+    el.innerHTML = entries.map(([id,p]) => `
+      <div class="chip"><span class="dot" style="background:${p.color}"></span><span>${escapeHtml(p.name)}</span><span class="score">$${p.score}</span>${id===myId?'<span class="you">(you)</span>':''}</div>
+    `).join('');
+  }
+
+  function renderBoard(board){
+    const el = $('board');
+    let html = '';
+    CATEGORIES.forEach(cat => { html += `<div class="cat-cell">${escapeHtml(cat.name)}</div>`; });
+    for(let vi=0; vi<5; vi++){
+      CATEGORIES.forEach((cat, ci) => {
+        const cell = board.cells[ci+'_'+vi] || {answered:false};
+        const val = cat.clues[vi].v;
+        html += `<div class="clue-cell ${cell.answered ? 'used':''}" data-ci="${ci}" data-vi="${vi}">${cell.answered ? '' : '$'+val}</div>`;
+      });
+    }
+    el.innerHTML = html;
+    el.querySelectorAll('.clue-cell:not(.used)').forEach(node => {
+      node.addEventListener('click', () => openClue(parseInt(node.dataset.ci), parseInt(node.dataset.vi)));
+    });
+  }
+
+  async function openClue(ci, vi){ await api('/api/open_clue', {ci, vi}); }
+  async function buzz(){ await api('/api/buzz', {id: myId, name: myName}); }
+  async function judge(correct){ await api('/api/judge', {correct}); }
+  async function skipClue(){ await api('/api/skip', {}); }
+
+  function closeModal(){ $('clue-overlay').classList.add('hidden'); }
+
+  function renderClueModal(board){
+    const ac = board.activeClue;
+    if(!ac){ closeModal(); return; }
+    const cat = CATEGORIES[ac.ci];
+    const clue = cat.clues[ac.vi];
+    $('clue-overlay').classList.remove('hidden');
+    $('clue-cat').textContent = cat.name;
+    $('clue-value').textContent = '$' + clue.v;
+    $('clue-text').textContent = clue.clue;
+
+    if(ac.revealAnswer){
+      $('answer-block').classList.remove('hidden');
+      $('answer-text').textContent = 'Answer: ' + clue.answer;
+    } else {
+      $('answer-block').classList.add('hidden');
+    }
+
+    const statusEl = $('buzz-status');
+    const actionsEl = $('clue-actions');
+
+    if(ac.buzzedId){
+      statusEl.textContent = (ac.buzzedId===myId ? 'You buzzed in!' : ac.buzzedName + ' buzzed in!') + ' Answer out loud, then judge below.';
+      actionsEl.innerHTML = `<button class="btn-correct" id="btn-correct">✓ Correct</button><button class="btn-wrong" id="btn-wrong">✗ Wrong</button>`;
+      $('btn-correct').onclick = () => judge(true);
+      $('btn-wrong').onclick = () => judge(false);
+    } else if(ac.revealAnswer){
+      statusEl.textContent = 'No one got it — revealing the answer.';
+      actionsEl.innerHTML = '';
+    } else {
+      const lockedOutMe = ac.lockedOut.includes(myId);
+      statusEl.textContent = lockedOutMe ? 'You already answered wrong — waiting for others...' : 'Buzz in when ready!';
+      actionsEl.innerHTML = `<button class="btn-gold btn-buzz" id="btn-buzz" ${lockedOutMe?'disabled':''}>BUZZ</button><button class="btn-ghost" id="btn-skip">Skip / Show Answer</button>`;
+      const buzzBtn = $('btn-buzz');
+      if(buzzBtn) buzzBtn.onclick = buzz;
+      $('btn-skip').onclick = skipClue;
+    }
+  }
+
+  $('reset-btn').addEventListener('click', async () => {
+    if(!confirm("Reset the board, everyone's score, and return to the lobby?")) return;
+    await api('/api/reset', {});
+    closeModal();
+    showScreen('lobby');
+  });
+
+  // ---------- Polling ----------
+  let lastBoardStr = '', lastPlayersStr = '', lastPhase = '', loopsStarted = false;
+  let pollBusy = false;
+
+  async function pollGame(){
+    if(pollBusy) return;
+    pollBusy = true;
+    try{
+      if(screen === 'start'){ await refreshStartScreenPreview(); return; }
+      const state = await api('/api/state?id=' + encodeURIComponent(myId), null, {timeout:3000, silent:true});
+      if(!state) return;
+
+      const playersStr = JSON.stringify(state.players);
+      if(playersStr !== lastPlayersStr){
+        lastPlayersStr = playersStr;
+        renderScoreboard(state.players);
+        if(screen === 'lobby') renderLobby(state.players);
+      }
+      if(state.phase !== lastPhase){
+        lastPhase = state.phase;
+        if(state.phase === 'playing' && screen === 'lobby') showScreen('game');
+        if(state.phase === 'lobby' && screen === 'game') showScreen('lobby');
+      }
+      const boardStr = JSON.stringify(state.board);
+      if(boardStr !== lastBoardStr){
+        lastBoardStr = boardStr;
+        if(screen === 'game'){ renderBoard(state.board); renderClueModal(state.board); }
+        else if(state.phase === 'playing'){ renderClueModal(state.board); }
+      }
+      renderCursors(state.cursors || {});
+    }finally{
+      pollBusy = false;
+    }
+  }
+
+
+  window.addEventListener('pagehide', () => {
+    try{ navigator.sendBeacon('/api/leave', JSON.stringify({id: myId})); }catch(e){}
+  });
+
+  function startLoops(){
+    if(loopsStarted) return;
+    loopsStarted = true;
+    pollGame();
+    setInterval(pollGame, 120);
+    document.addEventListener('mousemove', onMouseMove);
+  }
+
+  // ---------- Custom cursor ----------
+  function ensureMyCursor(){
+    if($('my-cursor')) return $('my-cursor');
+    const node = document.createElement('div');
+    node.id = 'my-cursor';
+    node.className = 'cursor';
+    node.style.opacity = '0';
+    node.innerHTML = `<svg width="24" height="24" viewBox="0 0 22 22"><path d="M2 1 L2 19 L7 15 L10 21 L13 19.5 L10 13.5 L17 13 Z" fill="var(--gold)" stroke="#2a1c04" stroke-width="1.4"/></svg>`;
+    $('cursor-layer').appendChild(node);
+    return node;
+  }
+  function onLocalCursorMove(e){
+    const node = ensureMyCursor();
+    node.style.opacity = '1';
+    node.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    ensureMyCursor();
+    document.addEventListener('mousemove', onLocalCursorMove);
+    document.addEventListener('mouseleave', () => { const n=$('my-cursor'); if(n) n.style.opacity='0'; });
+    refreshStartScreenPreview();
+    setInterval(refreshStartScreenPreview, 2500);
+  });
+
+  let lastCursorSend = 0;
+  let cursorSendPending = false;
+  let queuedCursorEvent = null;
+
+  function sendCursor(e){
+    queuedCursorEvent = e;
+    if(cursorSendPending) return;
+    cursorSendPending = true;
+
+    const now = performance.now();
+    const wait = Math.max(0, 33 - (now - lastCursorSend));
+    setTimeout(() => {
+      const ev = queuedCursorEvent;
+      queuedCursorEvent = null;
+      cursorSendPending = false;
+      if(!ev) return;
+
+      lastCursorSend = performance.now();
+      api('/api/cursor', {
+        id: myId, name: myName, color: myColor,
+        x: ev.clientX / window.innerWidth,
+        y: ev.clientY / window.innerHeight,
+      }, {timeout:1800, silent:true});
+    }, wait);
+  }
+
+  function onMouseMove(e){
+    const node = ensureMyCursor();
+    node.style.opacity = '1';
+    node.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+    sendCursor(e);
+  }
+
+  const remoteCursors = new Map();
+
+  function renderCursors(cursors){
+    const layer = $('cursor-layer');
+    const activeIds = new Set();
+
+    Object.entries(cursors).forEach(([id, data]) => {
+      if(id === myId) return;
+      activeIds.add(id);
+
+      let node = document.getElementById('cur-' + id);
+      if(!node){
+        node = document.createElement('div');
+        node.className = 'cursor';
+        node.id = 'cur-' + id;
+        node.innerHTML = `<svg width="22" height="22" viewBox="0 0 22 22"><path d="M2 1 L2 19 L7 15 L10 21 L13 19.5 L10 13.5 L17 13 Z" fill="${data.color}" stroke="#000" stroke-width="1"/></svg><div class="label" style="border-color:${data.color}66">${escapeHtml(data.name)}</div>`;
+        layer.appendChild(node);
+      }
+
+      let target = remoteCursors.get(id);
+      if(!target){
+        target = {
+          x: data.x * window.innerWidth,
+          y: data.y * window.innerHeight,
+          tx: data.x * window.innerWidth,
+          ty: data.y * window.innerHeight
+        };
+        remoteCursors.set(id, target);
+      }else{
+        target.tx = data.x * window.innerWidth;
+        target.ty = data.y * window.innerHeight;
+      }
+    });
+
+    Array.from(remoteCursors.keys()).forEach(id => {
+      if(!activeIds.has(id)){
+        remoteCursors.delete(id);
+        const node = document.getElementById('cur-' + id);
+        if(node) node.remove();
+      }
+    });
+  }
+
+  function animateRemoteCursors(){
+    remoteCursors.forEach((target, id) => {
+      const node = document.getElementById('cur-' + id);
+      if(!node) return;
+      target.x += (target.tx - target.x) * 0.42;
+      target.y += (target.ty - target.y) * 0.42;
+      node.style.transform = `translate3d(${target.x}px, ${target.y}px, 0)`;
+    });
+    requestAnimationFrame(animateRemoteCursors);
+  }
+  requestAnimationFrame(animateRemoteCursors);
+
+})();
+</script>
+</body>
+</html>

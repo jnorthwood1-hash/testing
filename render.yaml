@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: spqr-jeopardy
+    runtime: python
+    buildCommand: ""
+    startCommand: python server.py
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.5
